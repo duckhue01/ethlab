@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gasper — LMD-GHOST Fork Choice Visualizer</title>
+  <style>
+    :root {
+      --bg: #0f1117; --card: #181a20; --border: #2a2d38; --fg: #e4e4e7;
+      --muted: #71717a; --blue: #3b82f6; --amber: #f59e0b; --emerald: #10b981;
+      --purple: #a855f7; --red: #ef4444; --cyan: #06b6d4; --pink: #ec4899;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--fg); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    code { background: var(--bg); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+    pre code { background: none; padding: 0; }
+
+    /* Layout */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .grid-main { display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
+    .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .grid-4col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
+    @media (max-width: 900px) {
+      .grid-main, .grid-2col, .grid-3col { grid-template-columns: 1fr; }
+      .grid-4col { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Components */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+    .card-thick { border-width: 2px; }
+    header { background: var(--card); border-bottom: 1px solid var(--border); padding: 16px 0; }
+    header h1 { font-size: 22px; font-weight: 700; }
+    header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    h2 { font-size: 18px; font-weight: 700; text-align: center; }
+    h3 { font-size: 14px; font-weight: 700; margin-bottom: 12px; }
+    .subtitle { font-size: 13px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+    .tab-btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active { background: var(--card); border-color: var(--blue); color: var(--fg); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* Buttons */
+    .btn { padding: 4px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid; cursor: pointer; transition: all 0.15s; }
+    .btn:hover { filter: brightness(1.2); }
+    .btn-blue { background: rgba(59,130,246,0.1); border-color: var(--blue); color: #60a5fa; }
+    .btn-purple { background: rgba(168,85,247,0.1); border-color: var(--purple); color: #c084fc; }
+    .btn-red { background: rgba(239,68,68,0.1); border-color: var(--red); color: #f87171; }
+
+    /* Scenario */
+    .scenario-btn { padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); cursor: pointer; transition: all 0.15s; }
+    .scenario-btn:hover { transform: translateY(-1px); border-color: var(--blue); }
+    .scenario-btn.selected { border-color: var(--blue) !important; background: rgba(59,130,246,0.08) !important; }
+    .scenario-title { font-size: 12px; font-weight: 600; color: var(--fg); }
+    .scenario-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* Canvas area */
+    .canvas-wrap { border-radius: 12px; border: 1px solid var(--border); background: var(--card); overflow: hidden; position: relative; }
+    .canvas-bar { padding: 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .canvas-bar span { font-size: 13px; font-weight: 600; }
+    .canvas-bar .btns { display: flex; gap: 8px; }
+    #treeCanvas { display: block; width: 100%; height: 520px; }
+    #stepInfo { position: absolute; bottom: 16px; left: 16px; right: 16px; border-radius: 8px; padding: 10px 14px; background: rgba(24,26,32,0.95); border: 1px solid var(--border); font-size: 12px; display: none; }
+    #stepInfo b { color: var(--blue); }
+
+    /* Tooltip */
+    .tooltip { position: absolute; pointer-events: none; background: #1e1e2e; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity 0.15s; max-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .tooltip.show { opacity: 1; }
+
+    /* Validator panel */
+    .vrow { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: var(--bg); }
+    .vdot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .vname { font-size: 12px; font-weight: 600; min-width: 26px; }
+    .vbal { font-size: 11px; color: var(--muted); }
+    .vsel { margin-left: auto; font-size: 12px; border-radius: 6px; padding: 2px 8px; border: 1px solid var(--border); background: var(--card); color: var(--fg); }
+
+    /* Weight table */
+    .wcard { border-radius: 8px; padding: 8px; border: 1px solid var(--border); background: var(--bg); font-size: 12px; }
+    .wcard-head { display: flex; justify-content: space-between; align-items: center; }
+    .wcard-voters { color: var(--muted); margin-top: 4px; font-size: 11px; }
+
+    /* Legend */
+    .legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+    .legend-box { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+
+    /* Algorithm */
+    pre { background: var(--bg); border-radius: 8px; padding: 16px; overflow-x: auto; font-size: 12px; line-height: 1.7; }
+    .key-prop { margin-bottom: 14px; }
+    .key-label { font-weight: 600; font-size: 13px; }
+    .key-text { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* Gasper tab */
+    .gasper-card { padding: 20px; }
+    .gasper-card h3 { font-size: 13px; }
+
+    /* Attack tag */
+    .attack-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; background: rgba(239,68,68,0.1); color: var(--red); margin-right: 8px; }
+    .attack-title { display: flex; align-items: center; margin-bottom: 12px; }
+    .attack-title h3 { margin-bottom: 0; }
+
+    /* Misc */
+    .space-y > * + * { margin-top: 8px; }
+    .space-y-lg > * + * { margin-top: 16px; }
+    .mb { margin-bottom: 16px; }
+    .mt { margin-top: 16px; }
+    .text-center { text-align: center; }
+    .flex-center { display: flex; align-items: center; justify-content: center; gap: 12px; }
+    .small { font-size: 12px; }
+    .xsmall { font-size: 11px; }
+    .mono { font-family: 'SF Mono', 'Fira Code', monospace; }
+    .c-blue { color: #60a5fa; }
+    .c-amber { color: #fbbf24; }
+    .c-emerald { color: var(--emerald); }
+    .c-purple { color: #c084fc; }
+    .c-cyan { color: var(--cyan); }
+    .c-red { color: var(--red); }
+    .c-muted { color: var(--muted); }
+    .c-fg { color: var(--fg); }
+    .bold { font-weight: 700; }
+    footer { border-top: 1px solid var(--border); padding: 16px 0; margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <h1>Gasper — LMD-GHOST Fork Choice</h1>
+      <p>Interactive visualization of Ethereum's fork choice rule</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('interactive')">🌳 Interactive Fork Tree</button>
+      <button class="tab-btn" onclick="switchTab('algorithm')">📐 Algorithm Step-by-Step</button>
+      <button class="tab-btn" onclick="switchTab('gasper')">🏛️ Gasper = GHOST + Casper</button>
+      <button class="tab-btn" onclick="switchTab('attacks')">⚔️ Attack Scenarios</button>
+    </div>
+  </div>
+
+  <div class="container" style="padding-bottom:24px;">
+
+    <!-- ===== TAB 1: INTERACTIVE ===== -->
+    <div id="tab-interactive" class="tab-pane active">
+      <div class="grid-main">
+        <!-- Sidebar -->
+        <div class="space-y-lg">
+          <div class="card">
+            <h3>📋 Scenarios</h3>
+            <div class="space-y" id="scenarioList"></div>
+          </div>
+          <div class="card">
+            <h3>🗳️ Validator Votes</h3>
+            <p class="xsmall c-muted mb">Click a validator's dropdown to change its vote. GHOST re-runs automatically.</p>
+            <div class="space-y" id="validatorPanel"></div>
+          </div>
+          <div class="card">
+            <h3>Legend</h3>
+            <div class="legend-row"><div class="legend-box" style="border:2px solid var(--emerald);background:rgba(16,185,129,0.15);"></div> Finalized</div>
+            <div class="legend-row"><div class="legend-box" style="border:2px solid var(--purple);background:rgba(168,85,247,0.15);"></div> Justified</div>
+            <div class="legend-row"><div class="legend-box" style="border:2px solid var(--blue);background:rgba(59,130,246,0.3);"></div> GHOST path</div>
+            <div class="legend-row"><div class="legend-box" style="border:2px solid var(--amber);"></div> HEAD</div>
+            <div class="legend-row"><div class="legend-box" style="background:var(--border);"></div> Non-canonical</div>
+            <div class="legend-row"><span class="c-cyan bold">●</span> Validator vote</div>
+          </div>
+        </div>
+
+        <!-- Main canvas -->
+        <div>
+          <div class="canvas-wrap">
+            <div class="canvas-bar">
+              <span id="canvasTitle">Fork Tree</span>
+              <div class="btns">
+                <button class="btn btn-blue" onclick="runGHOST()">▶ Run GHOST</button>
+                <button class="btn btn-purple" onclick="stepGHOST()">⏭ Step</button>
+                <button class="btn btn-red" onclick="resetGHOST()">↺ Reset</button>
+              </div>
+            </div>
+            <canvas id="treeCanvas"></canvas>
+            <div id="tooltip" class="tooltip"></div>
+            <div id="stepInfo"><b>GHOST Step:</b> <span id="stepText"></span></div>
+          </div>
+          <div class="card mt">
+            <h3>📊 Subtree Weights</h3>
+            <div class="grid-4col" id="weightTable"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 2: ALGORITHM ===== -->
+    <div id="tab-algorithm" class="tab-pane">
+      <div class="grid-2col">
+        <div class="card">
+          <h3>LMD-GHOST Pseudocode</h3>
+          <pre><code><span class="c-purple">def</span> <span class="c-blue">get_head</span>(store):
+    <span class="c-muted"># Start from the justified checkpoint</span>
+    head = store.<span class="c-emerald">justified_checkpoint</span>.root
+
+    <span class="c-purple">while</span> <span class="c-blue">True</span>:
+        children = <span class="c-blue">get_children</span>(head)
+        <span class="c-purple">if</span> len(children) == <span class="c-amber">0</span>:
+            <span class="c-purple">return</span> head  <span class="c-muted"># leaf = head</span>
+
+        <span class="c-muted"># For each child, sum weights</span>
+        <span class="c-muted"># of validators whose LATEST</span>
+        <span class="c-muted"># attestation is in that subtree</span>
+        head = <span class="c-blue">max</span>(
+            children,
+            key=<span class="c-purple">lambda</span> c: <span class="c-blue">get_weight</span>(c)
+        )
+
+<span class="c-purple">def</span> <span class="c-blue">get_weight</span>(block):
+    <span class="c-muted"># Sum effective_balance of validators</span>
+    <span class="c-muted"># whose latest attestation targets a</span>
+    <span class="c-muted"># descendant of block (or itself)</span>
+    weight = <span class="c-amber">0</span>
+    <span class="c-purple">for</span> v <span class="c-purple">in</span> active_validators:
+        target = store.latest_messages[v].root
+        <span class="c-purple">if</span> <span class="c-blue">is_ancestor</span>(block, target):
+            weight += v.<span class="c-cyan">effective_balance</span>
+    <span class="c-purple">return</span> weight</code></pre>
+        </div>
+        <div class="space-y-lg">
+          <div class="card">
+            <h3>🔑 Key Properties</h3>
+            <div class="key-prop"><div class="key-label c-blue">L — Latest Message Driven</div><div class="key-text">Only each validator's <strong class="c-fg">most recent</strong> attestation counts. Old votes are discarded.</div></div>
+            <div class="key-prop"><div class="key-label c-amber">M — Message</div><div class="key-text">An attestation = message with <code>beacon_block_root</code> (head vote) + <code>source→target</code> (FFG vote).</div></div>
+            <div class="key-prop"><div class="key-label c-emerald">D — Driven</div><div class="key-text">Fork choice is entirely <strong class="c-fg">driven by attestations</strong>. No longest-chain rule.</div></div>
+            <div class="key-prop"><div class="key-label c-purple">GHOST — Greedy Heaviest Observed SubTree</div><div class="key-text">At each fork, choose the branch with the <strong class="c-fg">most total attestation weight</strong> in its entire subtree. Greedy = decide at each level, no backtracking.</div></div>
+          </div>
+          <div class="card">
+            <h3>⚡ Why Not Longest Chain?</h3>
+            <div class="small c-muted">
+              <p>Bitcoin: <strong class="c-fg">longest chain</strong> (most PoW). Slow — need 6+ confirmations (~60 min).</p>
+              <p style="margin-top:6px;">Ethereum: <strong class="c-fg">heaviest subtree</strong> (most attestation weight) + Casper FFG = <strong class="c-emerald">economic finality in ~13 min</strong>.</p>
+            </div>
+          </div>
+          <div class="card">
+            <h3>🧩 Attestation Anatomy</h3>
+            <pre><code><span class="c-blue">Attestation</span> {
+  aggregation_bits: 0b110100...
+  data: {
+    slot: 1234,
+    index: 5,                    <span class="c-muted">// committee</span>
+    <span class="c-muted">// ── LMD-GHOST vote ──</span>
+    beacon_block_root: 0xABC,    <span class="c-cyan">// head vote</span>
+    <span class="c-muted">// ── Casper FFG vote ──</span>
+    source: {epoch:3, root},     <span class="c-emerald">// justified</span>
+    target: {epoch:4, root},     <span class="c-purple">// proposed</span>
+  }
+  signature: BLS_aggregate(...)
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 3: GASPER ===== -->
+    <div id="tab-gasper" class="tab-pane">
+      <h2>Gasper = LMD-GHOST + Casper FFG</h2>
+      <p class="subtitle mb">Two protocols combined into one consensus mechanism</p>
+
+      <div class="grid-3col mb">
+        <div class="card card-thick gasper-card" style="border-color:rgba(59,130,246,0.5);">
+          <h3 class="c-blue">🌳 LMD-GHOST</h3>
+          <div class="small bold mb" style="margin-bottom:8px;">Fork Choice Rule</div>
+          <div class="xsmall c-muted space-y">
+            <p>• Determines the <strong class="c-fg">canonical head</strong></p>
+            <p>• Uses latest attestations as votes</p>
+            <p>• Follows heaviest subtree from justified root</p>
+            <p>• Runs every slot (every 12s)</p>
+            <p>• Provides <strong class="c-blue">liveness</strong> — always picks a head</p>
+          </div>
+        </div>
+        <div class="card card-thick gasper-card" style="border-color:rgba(16,185,129,0.5);background:rgba(16,185,129,0.03);">
+          <h3 class="c-emerald text-center">⚡ Gasper</h3>
+          <div class="xsmall text-center space-y" style="color:var(--muted);padding-top:12px;">
+            <p>GHOST provides <span class="c-blue bold">liveness</span></p>
+            <p style="color:var(--emerald);font-size:18px;">+</p>
+            <p>Casper provides <span class="c-purple bold">safety</span></p>
+            <p style="color:var(--emerald);font-size:18px;">=</p>
+            <p class="c-fg bold">Complete consensus protocol</p>
+          </div>
+        </div>
+        <div class="card card-thick gasper-card" style="border-color:rgba(168,85,247,0.5);">
+          <h3 class="c-purple">🏛️ Casper FFG</h3>
+          <div class="small bold mb" style="margin-bottom:8px;">Finality Gadget</div>
+          <div class="xsmall c-muted space-y">
+            <p>• Determines <strong class="c-fg">justified & finalized</strong> checkpoints</p>
+            <p>• Uses source→target supermajority links</p>
+            <p>• Checkpoints at epoch boundaries</p>
+            <p>• Evaluates every epoch (~6.4 min)</p>
+            <p>• Provides <strong class="c-purple">safety</strong> — finalized = irreversible</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb">
+        <h3>🔗 How They Interact — Per-Slot Process</h3>
+        <svg viewBox="0 0 800 310" style="width:100%;max-width:800px;display:block;margin:0 auto;">
+          <defs>
+            <marker id="ga" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker>
+          </defs>
+          <rect x="30" y="100" width="60" height="40" rx="6" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="2"/>
+          <text x="60" y="115" text-anchor="middle" fill="#10b981" font-size="9" font-weight="700">FINALIZED</text>
+          <text x="60" y="130" text-anchor="middle" fill="var(--muted)" font-size="8">Epoch N-1</text>
+          <rect x="140" y="100" width="60" height="40" rx="6" fill="rgba(168,85,247,0.2)" stroke="#a855f7" stroke-width="2"/>
+          <text x="170" y="115" text-anchor="middle" fill="#a855f7" font-size="9" font-weight="700">JUSTIFIED</text>
+          <text x="170" y="130" text-anchor="middle" fill="var(--muted)" font-size="8">Epoch N</text>
+          <rect x="250" y="100" width="40" height="40" rx="6" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+          <text x="270" y="124" text-anchor="middle" fill="var(--muted)" font-size="8">Slot</text>
+          <rect x="300" y="100" width="40" height="40" rx="6" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+          <text x="320" y="124" text-anchor="middle" fill="var(--muted)" font-size="8">Slot</text>
+          <rect x="360" y="70" width="40" height="40" rx="6" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+          <text x="380" y="94" text-anchor="middle" fill="var(--muted)" font-size="8">A</text>
+          <rect x="360" y="130" width="40" height="40" rx="6" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+          <text x="380" y="154" text-anchor="middle" fill="var(--muted)" font-size="8">B</text>
+          <rect x="420" y="50" width="40" height="40" rx="6" fill="rgba(59,130,246,0.3)" stroke="var(--blue)" stroke-width="2"/>
+          <text x="440" y="74" text-anchor="middle" fill="#60a5fa" font-size="8" font-weight="700">HEAD</text>
+          <rect x="420" y="110" width="40" height="40" rx="6" fill="rgba(59,130,246,0.1)" stroke="var(--border)"/>
+          <line x1="90" y1="120" x2="140" y2="120" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ga)"/>
+          <line x1="200" y1="120" x2="250" y2="120" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ga)"/>
+          <line x1="290" y1="120" x2="300" y2="120" stroke="var(--muted)"/>
+          <line x1="340" y1="120" x2="360" y2="90" stroke="var(--muted)"/>
+          <line x1="340" y1="120" x2="360" y2="150" stroke="var(--muted)"/>
+          <line x1="400" y1="90" x2="420" y2="70" stroke="var(--blue)" stroke-width="2"/>
+          <line x1="400" y1="90" x2="420" y2="130" stroke="var(--muted)"/>
+          <circle cx="435" cy="42" r="4" fill="var(--cyan)"/><text x="448" y="45" fill="var(--cyan)" font-size="8">3 votes</text>
+          <circle cx="435" cy="158" r="4" fill="var(--cyan)"/><text x="448" y="161" fill="var(--cyan)" font-size="8">1 vote</text>
+          <!-- Labels -->
+          <line x1="30" y1="175" x2="200" y2="175" stroke="var(--purple)" stroke-width="1.5"/>
+          <line x1="30" y1="170" x2="30" y2="180" stroke="var(--purple)"/><line x1="200" y1="170" x2="200" y2="180" stroke="var(--purple)"/>
+          <text x="115" y="195" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">Casper FFG domain</text>
+          <text x="115" y="210" text-anchor="middle" fill="var(--muted)" font-size="9">Sets justified root = start of GHOST</text>
+          <line x1="140" y1="30" x2="460" y2="30" stroke="var(--blue)" stroke-width="1.5"/>
+          <line x1="140" y1="25" x2="140" y2="35" stroke="var(--blue)"/><line x1="460" y1="25" x2="460" y2="35" stroke="var(--blue)"/>
+          <text x="300" y="22" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">LMD-GHOST domain</text>
+          <text x="300" y="10" text-anchor="middle" fill="var(--muted)" font-size="9">Walks from justified root → head</text>
+          <!-- Process box -->
+          <rect x="520" y="10" width="260" height="280" rx="12" fill="var(--bg)" stroke="var(--border)"/>
+          <text x="650" y="38" text-anchor="middle" fill="var(--fg)" font-size="12" font-weight="700">Per-Slot Process</text>
+          <text x="540" y="68" fill="#c084fc" font-size="10" font-weight="600">❶ Casper FFG (each epoch)</text>
+          <text x="550" y="85" fill="var(--muted)" font-size="9">Tally source→target votes</text>
+          <text x="550" y="100" fill="var(--muted)" font-size="9">If ≥2/3: justify checkpoint</text>
+          <text x="550" y="115" fill="var(--muted)" font-size="9">If child justified: finalize parent</text>
+          <line x1="540" y1="130" x2="760" y2="130" stroke="var(--border)" stroke-width="0.5"/>
+          <text x="540" y="153" fill="#60a5fa" font-size="10" font-weight="600">❷ LMD-GHOST (each slot)</text>
+          <text x="550" y="170" fill="var(--muted)" font-size="9">Start at justified_checkpoint.root</text>
+          <text x="550" y="185" fill="var(--muted)" font-size="9">At each fork: pick heaviest subtree</text>
+          <text x="550" y="200" fill="var(--muted)" font-size="9">Repeat until leaf → that's HEAD</text>
+          <line x1="540" y1="215" x2="760" y2="215" stroke="var(--border)" stroke-width="0.5"/>
+          <text x="540" y="238" fill="#10b981" font-size="10" font-weight="600">❸ Notify Execution Layer</text>
+          <text x="550" y="255" fill="var(--muted)" font-size="9">engine_forkchoiceUpdatedV3({</text>
+          <text x="560" y="270" fill="var(--muted)" font-size="9">head, safe, finalized</text>
+          <text x="550" y="285" fill="var(--muted)" font-size="9">})</text>
+        </svg>
+      </div>
+
+      <div class="grid-2col">
+        <div class="card">
+          <h3 class="c-purple">🗳️ Supermajority Link</h3>
+          <div class="xsmall c-muted">
+            <p class="mb">A <strong class="c-fg">supermajority link</strong> S→T exists when ≥2/3 of validators attest:</p>
+            <pre><code>source = S (justified checkpoint)
+target = T (epoch boundary block)
+votes(S→T) ≥ <span class="c-purple">⅔ × total_active_balance</span></code></pre>
+            <p style="margin-top:8px;">When S→T is a supermajority link:</p>
+            <p>• T becomes <strong class="c-purple">justified</strong></p>
+            <p>• If T.epoch == S.epoch + 1 → S becomes <strong class="c-emerald">finalized</strong></p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 class="c-cyan">⚖️ Proposer Boost</h3>
+          <div class="xsmall c-muted">
+            <p class="mb"><strong class="c-fg">Proposer weight boosting</strong> gives the current slot's proposed block a temporary weight bonus to prevent reorg attacks.</p>
+            <pre><code><span class="c-cyan">proposer_boost</span> = committee_weight × 40/100
+
+<span class="c-muted">// Applied to the block proposed for the
+// current slot, only during that slot</span></code></pre>
+            <p style="margin-top:8px;">Prevents <strong class="c-fg">ex-ante reorgs</strong> where an adversary withholds their block to reorg a competing one.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== TAB 4: ATTACKS ===== -->
+    <div id="tab-attacks" class="tab-pane">
+      <h2>Attack Scenarios & Defenses</h2>
+      <p class="subtitle mb">How the fork choice handles adversarial behavior</p>
+
+      <div class="space-y-lg">
+        <div class="card">
+          <div class="attack-title"><span class="attack-tag">ATTACK</span><h3 style="margin:0;">Balancing Attack</h3></div>
+          <div class="grid-2col">
+            <div class="xsmall c-muted space-y">
+              <p><strong class="c-fg">How it works:</strong> Attacker controls a small fraction of validators. They strategically release attestations to keep two branches at roughly equal weight → <strong class="c-red">delays finality</strong>.</p>
+              <p><strong class="c-fg">Impact:</strong> Honest validators split. No 2/3 majority forms.</p>
+              <p><strong class="c-emerald">Defense — Proposer Boosting:</strong> Newly proposed block gets a temporary weight bonus (40% of committee weight), making it harder to balance the fork.</p>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:16px;">
+              <svg viewBox="0 0 300 160" style="width:100%;">
+                <rect x="120" y="10" width="60" height="30" rx="5" fill="rgba(168,85,247,0.2)" stroke="#a855f7"/>
+                <text x="150" y="30" text-anchor="middle" fill="#a855f7" font-size="9">Justified</text>
+                <line x1="150" y1="40" x2="80" y2="70" stroke="var(--muted)" stroke-width="1.5"/>
+                <line x1="150" y1="40" x2="220" y2="70" stroke="var(--muted)" stroke-width="1.5"/>
+                <rect x="50" y="65" width="60" height="30" rx="5" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+                <text x="80" y="84" text-anchor="middle" fill="var(--muted)" font-size="9">Fork A</text>
+                <rect x="190" y="65" width="60" height="30" rx="5" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+                <text x="220" y="84" text-anchor="middle" fill="var(--muted)" font-size="9">Fork B</text>
+                <text x="80" y="115" text-anchor="middle" fill="var(--cyan)" font-size="10" font-weight="700">49%</text>
+                <text x="220" y="115" text-anchor="middle" fill="var(--cyan)" font-size="10" font-weight="700">49%</text>
+                <text x="150" y="150" text-anchor="middle" fill="var(--red)" font-size="9">Attacker (2%) swings votes ↔</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="attack-title"><span class="attack-tag">ATTACK</span><h3 style="margin:0;">Ex-Ante Reorg (Block Withholding)</h3></div>
+          <div class="grid-2col">
+            <div class="xsmall c-muted space-y">
+              <p><strong class="c-fg">How it works:</strong> Proposer P₁ at slot N withholds their block. Honest proposer P₂ at slot N+1 builds on N-1. P₁ releases late with accumulated attestations → reorgs P₂.</p>
+              <p><strong class="c-fg">Goal:</strong> Steal P₂'s MEV or censor transactions.</p>
+              <p><strong class="c-emerald">Defense — Proposer Boosting:</strong> P₂'s block gets immediate weight boost so late blocks can't reorg it.</p>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:16px;">
+              <svg viewBox="0 0 300 130" style="width:100%;">
+                <rect x="10" y="45" width="50" height="30" rx="5" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+                <text x="35" y="64" text-anchor="middle" fill="var(--muted)" font-size="8">N-1</text>
+                <line x1="60" y1="60" x2="90" y2="30" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="4 2"/>
+                <rect x="90" y="15" width="60" height="30" rx="5" fill="rgba(239,68,68,0.15)" stroke="var(--red)"/>
+                <text x="120" y="29" text-anchor="middle" fill="var(--red)" font-size="8">N (withheld)</text>
+                <text x="120" y="39" text-anchor="middle" fill="var(--red)" font-size="7">by P₁</text>
+                <line x1="60" y1="60" x2="90" y2="80" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="90" y="65" width="60" height="30" rx="5" fill="rgba(59,130,246,0.3)" stroke="var(--blue)" stroke-width="2"/>
+                <text x="120" y="79" text-anchor="middle" fill="#60a5fa" font-size="8">N+1 (honest)</text>
+                <text x="120" y="89" text-anchor="middle" fill="#60a5fa" font-size="7">by P₂ +boost</text>
+                <line x1="150" y1="80" x2="200" y2="80" stroke="var(--blue)" stroke-width="1.5"/>
+                <rect x="200" y="65" width="50" height="30" rx="5" fill="rgba(59,130,246,0.15)" stroke="var(--border)"/>
+                <text x="225" y="84" text-anchor="middle" fill="var(--muted)" font-size="8">N+2</text>
+                <text x="220" y="25" fill="var(--red)" font-size="8">❌ Late release fails</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="attack-title"><span class="attack-tag">ATTACK</span><h3 style="margin:0;">Long-Range Attack</h3></div>
+          <div class="xsmall c-muted space-y">
+            <p><strong class="c-fg">How it works:</strong> Old validators who withdrew create a fake alternate chain from the distant past using their old keys.</p>
+            <p><strong class="c-emerald">Defense — Weak Subjectivity:</strong> New nodes sync from a recent <strong class="c-fg">weak subjectivity checkpoint</strong> (≤ ~2 weeks old). Chains diverging before this are ignored.</p>
+            <pre style="margin-top:8px;"><code>geth --checkpoint-sync-url https://beaconstate-mainnet.chainsafe.io
+<span class="c-muted">// Syncs from recent finalized state, not genesis</span></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Gasper / LMD-GHOST Fork Choice Visualizer · Ethereum Consensus Layer</footer>
+
+<script>
+// ====== DATA ======
+const SCENARIOS = [
+  {
+    name: "Simple Majority",
+    desc: "Clear majority on one branch",
+    blocks: [
+      { id:'G', label:'Genesis', parent:null, slot:0, status:'finalized' },
+      { id:'A', label:'A', parent:'G', slot:1, status:'justified' },
+      { id:'B', label:'B', parent:'A', slot:2, status:'normal' },
+      { id:'C', label:'C', parent:'A', slot:2, status:'normal' },
+      { id:'D', label:'D', parent:'B', slot:3, status:'normal' },
+      { id:'E', label:'E', parent:'C', slot:3, status:'normal' },
+    ],
+    validators: [
+      { name:'V1', balance:32, vote:'D', color:'#3b82f6' },
+      { name:'V2', balance:32, vote:'D', color:'#8b5cf6' },
+      { name:'V3', balance:32, vote:'D', color:'#06b6d4' },
+      { name:'V4', balance:32, vote:'E', color:'#f59e0b' },
+      { name:'V5', balance:32, vote:'E', color:'#ec4899' },
+    ],
+    justifiedRoot: 'A'
+  },
+  {
+    name: "Tight Race",
+    desc: "Near-equal weight — one vote difference",
+    blocks: [
+      { id:'G', label:'Genesis', parent:null, slot:0, status:'finalized' },
+      { id:'A', label:'A', parent:'G', slot:1, status:'justified' },
+      { id:'B', label:'B', parent:'A', slot:2, status:'normal' },
+      { id:'C', label:'C', parent:'A', slot:2, status:'normal' },
+      { id:'D', label:'D', parent:'B', slot:3, status:'normal' },
+      { id:'E', label:'E', parent:'C', slot:3, status:'normal' },
+    ],
+    validators: [
+      { name:'V1', balance:32, vote:'D', color:'#3b82f6' },
+      { name:'V2', balance:32, vote:'D', color:'#8b5cf6' },
+      { name:'V3', balance:32, vote:'D', color:'#06b6d4' },
+      { name:'V4', balance:32, vote:'E', color:'#f59e0b' },
+      { name:'V5', balance:32, vote:'E', color:'#ec4899' },
+      { name:'V6', balance:32, vote:'E', color:'#10b981' },
+    ],
+    justifiedRoot: 'A'
+  },
+  {
+    name: "Deep Fork",
+    desc: "Three-way fork with different depths",
+    blocks: [
+      { id:'G', label:'Genesis', parent:null, slot:0, status:'finalized' },
+      { id:'A', label:'A', parent:'G', slot:1, status:'justified' },
+      { id:'B', label:'B', parent:'A', slot:2, status:'normal' },
+      { id:'C', label:'C', parent:'A', slot:2, status:'normal' },
+      { id:'F', label:'F', parent:'A', slot:2, status:'normal' },
+      { id:'D', label:'D', parent:'B', slot:3, status:'normal' },
+      { id:'E', label:'E', parent:'C', slot:3, status:'normal' },
+      { id:'H', label:'H', parent:'D', slot:4, status:'normal' },
+    ],
+    validators: [
+      { name:'V1', balance:32, vote:'H', color:'#3b82f6' },
+      { name:'V2', balance:32, vote:'D', color:'#8b5cf6' },
+      { name:'V3', balance:32, vote:'E', color:'#06b6d4' },
+      { name:'V4', balance:32, vote:'E', color:'#f59e0b' },
+      { name:'V5', balance:32, vote:'F', color:'#ec4899' },
+      { name:'V6', balance:32, vote:'F', color:'#10b981' },
+      { name:'V7', balance:32, vote:'F', color:'#ef4444' },
+    ],
+    justifiedRoot: 'A'
+  },
+  {
+    name: "Cascading Finality",
+    desc: "GHOST starts from latest justified, not genesis",
+    blocks: [
+      { id:'G', label:'Genesis', parent:null, slot:0, status:'finalized' },
+      { id:'A', label:'A (ep1)', parent:'G', slot:1, status:'finalized' },
+      { id:'B', label:'B (ep2)', parent:'A', slot:2, status:'justified' },
+      { id:'C', label:'C', parent:'B', slot:3, status:'normal' },
+      { id:'D', label:'D', parent:'B', slot:3, status:'normal' },
+      { id:'E', label:'E', parent:'C', slot:4, status:'normal' },
+      { id:'F', label:'F', parent:'D', slot:4, status:'normal' },
+    ],
+    validators: [
+      { name:'V1', balance:32, vote:'E', color:'#3b82f6' },
+      { name:'V2', balance:32, vote:'E', color:'#8b5cf6' },
+      { name:'V3', balance:32, vote:'E', color:'#06b6d4' },
+      { name:'V4', balance:32, vote:'E', color:'#f59e0b' },
+      { name:'V5', balance:32, vote:'F', color:'#ec4899' },
+    ],
+    justifiedRoot: 'B'
+  }
+];
+
+let currentScenario=0, state={}, ghostSteps=[], ghostStepIndex=-1, blockPositions={};
+
+function init(){ renderScenarios(); loadScenario(0); }
+
+function renderScenarios(){
+  document.getElementById('scenarioList').innerHTML = SCENARIOS.map((s,i)=>`
+    <div class="scenario-btn" onclick="loadScenario(${i})" id="scenario-${i}">
+      <div class="scenario-title">${s.name}</div>
+      <div class="scenario-desc">${s.desc}</div>
+    </div>`).join('');
+}
+
+function loadScenario(idx){
+  currentScenario=idx;
+  const s=SCENARIOS[idx];
+  state={blocks:JSON.parse(JSON.stringify(s.blocks)),validators:JSON.parse(JSON.stringify(s.validators)),justifiedRoot:s.justifiedRoot,selectedPath:[],head:null};
+  ghostSteps=[]; ghostStepIndex=-1;
+  document.querySelectorAll('.scenario-btn').forEach((el,i)=>el.classList.toggle('selected',i===idx));
+  document.getElementById('canvasTitle').textContent=`Fork Tree — ${s.name}`;
+  renderValidators(); runGHOST();
+}
+
+function getChildren(bid){ return state.blocks.filter(b=>b.parent===bid); }
+function isAncestor(aid,did){ const m={}; state.blocks.forEach(b=>m[b.id]=b); let c=did; while(c){if(c===aid)return true; c=m[c]?.parent;} return false; }
+function getWeight(bid){ let w=0; state.validators.forEach(v=>{if(isAncestor(bid,v.vote))w+=v.balance;}); return w; }
+
+function runGHOSTFull(){
+  const steps=[]; let head=state.justifiedRoot;
+  steps.push({type:'start',block:head,msg:`Start from justified root: ${head}`});
+  while(true){
+    const ch=getChildren(head);
+    if(!ch.length){steps.push({type:'head',block:head,msg:`${head} is a leaf → HEAD selected!`});break;}
+    const ws=ch.map(c=>({id:c.id,weight:getWeight(c.id)})).sort((a,b)=>b.weight-a.weight);
+    steps.push({type:'compare',block:head,children:ws,chosen:ws[0].id,msg:`At ${head}: ${ws.map(w=>`${w.id}(${w.weight})`).join(' vs ')} → pick ${ws[0].id} (weight ${ws[0].weight})`});
+    head=ws[0].id;
+  }
+  return steps;
+}
+
+function runGHOST(){
+  ghostSteps=runGHOSTFull(); ghostStepIndex=ghostSteps.length-1;
+  const hs=ghostSteps.find(s=>s.type==='head');
+  if(hs){state.head=hs.block; state.selectedPath=[]; const m={}; state.blocks.forEach(b=>m[b.id]=b); let c=state.head; while(c){state.selectedPath.push(c);c=m[c]?.parent;}}
+  renderTree(); renderWeightTable(); showStep(ghostSteps[ghostStepIndex]);
+}
+
+function stepGHOST(){
+  if(!ghostSteps.length)ghostSteps=runGHOSTFull();
+  ghostStepIndex++; if(ghostStepIndex>=ghostSteps.length)ghostStepIndex=0;
+  state.selectedPath=[]; state.head=null;
+  for(let i=0;i<=ghostStepIndex;i++){const s=ghostSteps[i]; if(s.type==='start'||s.type==='compare'){if(!state.selectedPath.includes(s.block))state.selectedPath.push(s.block);} if(s.type==='compare'&&!state.selectedPath.includes(s.chosen))state.selectedPath.push(s.chosen); if(s.type==='head'){state.head=s.block;if(!state.selectedPath.includes(s.block))state.selectedPath.push(s.block);}}
+  renderTree(); renderWeightTable(); showStep(ghostSteps[ghostStepIndex]);
+}
+
+function resetGHOST(){ ghostStepIndex=-1; state.selectedPath=[]; state.head=null; document.getElementById('stepInfo').style.display='none'; renderTree(); renderWeightTable(); }
+
+function showStep(s){if(!s)return; document.getElementById('stepInfo').style.display='block'; document.getElementById('stepText').textContent=s.msg;}
+
+function renderTree(){
+  const canvas=document.getElementById('treeCanvas'); const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1;
+  const cw=canvas.clientWidth, ch=canvas.clientHeight; canvas.width=cw*dpr; canvas.height=ch*dpr; ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,cw,ch);
+  const blocks=state.blocks, byId={}; blocks.forEach(b=>byId[b.id]=b);
+  const sg={}; blocks.forEach(b=>{if(!sg[b.slot])sg[b.slot]=[];sg[b.slot].push(b);});
+  const slots=Object.keys(sg).map(Number).sort((a,b)=>a-b);
+  const px=80,py=60,ss=(cw-2*px)/Math.max(slots.length-1,1);
+  blockPositions={};
+  slots.forEach((sl,si)=>{const g=sg[sl],x=px+si*ss,th=ch-2*py,gs=th/(g.length+1); g.forEach((b,gi)=>{blockPositions[b.id]={x,y:py+(gi+1)*gs};});});
+
+  ctx.font='11px system-ui'; ctx.fillStyle='#71717a'; ctx.textAlign='center';
+  slots.forEach((sl,si)=>ctx.fillText(`Slot ${sl}`,px+si*ss,20));
+
+  blocks.forEach(b=>{if(!b.parent)return; const f=blockPositions[b.parent],t=blockPositions[b.id]; if(!f||!t)return;
+    const onP=state.selectedPath.includes(b.id)&&state.selectedPath.includes(b.parent);
+    ctx.beginPath(); ctx.moveTo(f.x,f.y); ctx.bezierCurveTo((f.x+t.x)/2,f.y,(f.x+t.x)/2,t.y,t.x,t.y);
+    if(onP){ctx.strokeStyle='#3b82f6';ctx.lineWidth=3;ctx.shadowColor='rgba(59,130,246,0.4)';ctx.shadowBlur=8;}
+    else{ctx.strokeStyle='#2a2d38';ctx.lineWidth=1.5;ctx.shadowBlur=0;}
+    ctx.stroke(); ctx.shadowBlur=0;
+  });
+
+  const R=28;
+  blocks.forEach(b=>{const p=blockPositions[b.id]; if(!p)return;
+    const onP=state.selectedPath.includes(b.id), isH=state.head===b.id;
+    ctx.beginPath(); ctx.arc(p.x,p.y,R,0,Math.PI*2);
+    let fc='rgba(42,45,56,0.8)',sc='#3f4251',sw=1.5;
+    if(b.status==='finalized'){fc='rgba(16,185,129,0.15)';sc='#10b981';sw=2;}
+    else if(b.status==='justified'){fc='rgba(168,85,247,0.15)';sc='#a855f7';sw=2;}
+    if(onP&&b.status==='normal'){fc='rgba(59,130,246,0.15)';sc='#3b82f6';sw=2;}
+    if(isH){fc='rgba(245,158,11,0.2)';sc='#f59e0b';sw=3;ctx.shadowColor='rgba(245,158,11,0.4)';ctx.shadowBlur=12;}
+    ctx.fillStyle=fc; ctx.fill(); ctx.strokeStyle=sc; ctx.lineWidth=sw; ctx.stroke(); ctx.shadowBlur=0;
+    ctx.fillStyle=isH?'#fbbf24':(onP?'#60a5fa':'#e4e4e7'); ctx.font=`${isH?'bold ':''}13px system-ui`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(b.label,p.x,p.y);
+    if(b.status==='finalized'){ctx.fillStyle='#10b981';ctx.font='9px system-ui';ctx.fillText('FINALIZED',p.x,p.y+R+12);}
+    else if(b.status==='justified'){ctx.fillStyle='#a855f7';ctx.font='9px system-ui';ctx.fillText('JUSTIFIED',p.x,p.y+R+12);}
+    if(isH){ctx.fillStyle='#f59e0b';ctx.font='bold 10px system-ui';ctx.fillText('HEAD ★',p.x,p.y-R-10);}
+    const w=getWeight(b.id); if(w>0){ctx.fillStyle='#06b6d4';ctx.font='bold 10px system-ui';ctx.fillText(`${w}`,p.x+R+8,p.y-6);ctx.fillStyle='#71717a';ctx.font='8px system-ui';ctx.fillText('ETH',p.x+R+8,p.y+6);}
+  });
+
+  state.validators.forEach((v,vi)=>{const tp=blockPositions[v.vote]; if(!tp)return;
+    const a=-Math.PI/2+(vi/state.validators.length)*Math.PI*0.8-0.3, d=R+18;
+    const vx=tp.x+Math.cos(a)*d, vy=tp.y+Math.sin(a)*d;
+    ctx.beginPath();ctx.moveTo(vx,vy);ctx.lineTo(tp.x+Math.cos(a)*R,tp.y+Math.sin(a)*R);ctx.strokeStyle=v.color+'60';ctx.lineWidth=1;ctx.stroke();
+    ctx.beginPath();ctx.arc(vx,vy,5,0,Math.PI*2);ctx.fillStyle=v.color;ctx.fill();
+    ctx.fillStyle=v.color;ctx.font='8px system-ui';ctx.textAlign='center';ctx.fillText(v.name,vx,vy-8);
+  });
+}
+
+function renderValidators(){
+  const p=document.getElementById('validatorPanel'), ids=state.blocks.map(b=>b.id);
+  p.innerHTML=state.validators.map((v,i)=>`<div class="vrow"><div class="vdot" style="background:${v.color};"></div><span class="vname">${v.name}</span><span class="vbal">${v.balance}E</span><select class="vsel" onchange="changeVote(${i},this.value)">${ids.map(id=>`<option value="${id}"${v.vote===id?' selected':''}>${id}</option>`).join('')}</select></div>`).join('');
+}
+
+function renderWeightTable(){
+  document.getElementById('weightTable').innerHTML=state.blocks.map(b=>{
+    const w=getWeight(b.id),isH=state.head===b.id,onP=state.selectedPath.includes(b.id);
+    const bc=isH?'var(--amber)':(onP?'var(--blue)':'var(--border)');
+    const bg=isH?'rgba(245,158,11,0.1)':(onP?'rgba(59,130,246,0.05)':'var(--bg)');
+    const vs=state.validators.filter(v=>isAncestor(b.id,v.vote)).map(v=>v.name).join(', ');
+    return `<div class="wcard" style="border-color:${bc};background:${bg};"><div class="wcard-head"><span class="bold" style="color:${isH?'var(--amber)':'var(--fg)'};">${b.label}${isH?' ★':''}</span><span class="bold c-cyan">${w} ETH</span></div><div class="wcard-voters">${vs||'—'}</div></div>`;
+  }).join('');
+}
+
+function changeVote(i,bid){state.validators[i].vote=bid;runGHOST();}
+
+function switchTab(id){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if(id==='interactive')setTimeout(()=>renderTree(),50);
+}
+
+// Tooltip
+const cvs=document.getElementById('treeCanvas'), ttp=document.getElementById('tooltip');
+cvs.addEventListener('mousemove',e=>{
+  const r=cvs.getBoundingClientRect(),mx=e.clientX-r.left,my=e.clientY-r.top; let hit=null;
+  for(const b of state.blocks||[]){const p=blockPositions[b.id];if(!p)continue;if((mx-p.x)**2+(my-p.y)**2<28*28){hit=b;break;}}
+  if(hit){const w=getWeight(hit.id),vs=state.validators.filter(v=>isAncestor(hit.id,v.vote));
+    ttp.innerHTML=`<div style="color:var(--fg);font-weight:700;margin-bottom:4px;">Block ${hit.label}</div><div>Slot: ${hit.slot}</div><div>Status: <span style="color:${hit.status==='finalized'?'var(--emerald)':hit.status==='justified'?'var(--purple)':'var(--fg)'};">${hit.status}</span></div><div>Subtree weight: <span style="color:var(--cyan);font-weight:700;">${w} ETH</span></div><div>Voters: ${vs.length?vs.map(v=>`<span style="color:${v.color};">${v.name}</span>`).join(', '):'—'}</div>${state.head===hit.id?'<div style="color:var(--amber);font-weight:700;margin-top:4px;">★ GHOST HEAD</div>':''}`;
+    ttp.style.left=(e.clientX-cvs.closest('.canvas-wrap').getBoundingClientRect().left+15)+'px';
+    ttp.style.top=(e.clientY-cvs.closest('.canvas-wrap').getBoundingClientRect().top-10)+'px';
+    ttp.classList.add('show');cvs.style.cursor='pointer';
+  }else{ttp.classList.remove('show');cvs.style.cursor='default';}
+});
+cvs.addEventListener('mouseleave',()=>ttp.classList.remove('show'));
+window.addEventListener('resize',()=>{if(state.blocks)renderTree();});
+init();
+</script>
+</body>
+</html>
