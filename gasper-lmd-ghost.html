@@ -67,8 +67,31 @@
     .canvas-bar span { font-size: 13px; font-weight: 600; }
     .canvas-bar .btns { display: flex; gap: 8px; }
     #treeCanvas { display: block; width: 100%; height: 520px; }
-    #stepInfo { position: absolute; bottom: 16px; left: 16px; right: 16px; border-radius: 8px; padding: 10px 14px; background: rgba(24,26,32,0.95); border: 1px solid var(--border); font-size: 12px; display: none; }
+    #stepInfo { position: absolute; bottom: 16px; left: 16px; right: 16px; border-radius: 8px; padding: 10px 14px; background: rgba(24,26,32,0.95); border: 1px solid var(--border); font-size: 12px; display: none; max-height: 200px; overflow-y: auto; }
     #stepInfo b { color: var(--blue); }
+
+    /* Step-by-step reasoning */
+    .step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+    .step-badge { font-size: 10px; font-weight: 800; color: #c084fc; background: rgba(168,85,247,0.15); border-radius: 5px; padding: 2px 7px; flex-shrink: 0; }
+    .step-title { font-size: 13px; font-weight: 700; color: var(--fg); }
+    .step-rule { margin-left: auto; font-size: 10px; color: var(--cyan); white-space: nowrap; }
+    .step-msg { font-size: 12px; color: #60a5fa; margin-bottom: 5px; }
+    .step-why { font-size: 12px; color: var(--muted); line-height: 1.6; }
+    .step-why b, .step-list b { color: var(--fg); }
+    .step-list { margin: 7px 0 0 16px; font-size: 11px; color: var(--muted); line-height: 1.7; }
+    .step-list li::marker { color: var(--cyan); }
+    .trace-step { border-bottom: 1px solid var(--border); padding: 7px 0; }
+    .trace-step:last-child { border-bottom: none; }
+    .trace-step summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .trace-step summary::-webkit-details-marker { display: none; }
+    .trace-step summary::before { content: '▸'; color: var(--muted); font-size: 10px; width: 10px; }
+    .trace-step[open] summary::before { content: '▾'; }
+    .trace-step .trace-title { font-weight: 700; color: var(--fg); }
+    .trace-step.current .trace-title { color: #fbbf24; }
+    .trace-body { padding: 7px 0 2px 40px; font-size: 11px; color: var(--muted); line-height: 1.6; }
+    .trace-body .rule-tag { display: inline-block; font-size: 9px; color: var(--cyan); border: 1px solid rgba(6,182,212,0.4); border-radius: 4px; padding: 1px 6px; margin-bottom: 5px; }
+    .trace-body b { color: var(--fg); }
+    .trace-body ul { margin: 5px 0 0 16px; }
 
     /* Tooltip */
     .tooltip { position: absolute; pointer-events: none; background: #1e1e2e; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 12px; z-index: 100; opacity: 0; transition: opacity 0.15s; max-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
@@ -105,6 +128,49 @@
     .attack-title { display: flex; align-items: center; margin-bottom: 12px; }
     .attack-title h3 { margin-bottom: 0; }
 
+    /* Overview / explainer */
+    .hero { border-radius: 14px; border: 1px solid rgba(59,130,246,0.35); background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(168,85,247,0.08)); padding: 24px; }
+    .hero h2 { text-align: left; font-size: 23px; }
+    .hero p { font-size: 13px; color: var(--muted); line-height: 1.75; margin-top: 10px; max-width: 960px; }
+    .stat { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center; }
+    .stat-val { font-size: 20px; font-weight: 800; }
+    .stat-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; text-transform: uppercase; }
+    .def-row { display: grid; grid-template-columns: 126px 1fr; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .def-row:last-child { border-bottom: none; }
+    .def-term { font-weight: 700; color: var(--cyan); }
+    .def-desc { color: var(--muted); line-height: 1.55; }
+    .diagram { width: 100%; height: auto; display: block; }
+    .note { border-left: 3px solid var(--blue); background: rgba(59,130,246,0.06); padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 12px; color: var(--muted); line-height: 1.65; }
+    .note-purple { border-color: var(--purple); background: rgba(168,85,247,0.06); }
+    .note-emerald { border-color: var(--emerald); background: rgba(16,185,129,0.06); }
+    .note b, .note strong { color: var(--fg); }
+
+    /* Comparison tables */
+    table.cmp { width: 100%; border-collapse: collapse; font-size: 12px; }
+    table.cmp th, table.cmp td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; line-height: 1.5; }
+    table.cmp th { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+    table.cmp tr:last-child td { border-bottom: none; }
+
+    /* Weight bars & decision trace */
+    .bar-row { display: grid; grid-template-columns: 62px 1fr 60px; gap: 10px; align-items: center; font-size: 11px; margin-bottom: 9px; }
+    .bar-track { display: flex; height: 17px; border-radius: 5px; background: var(--bg); overflow: hidden; border: 1px solid var(--border); }
+    .bar-seg { height: 100%; transition: width 0.35s ease; min-width: 0; }
+    .bar-num { text-align: right; color: var(--cyan); font-weight: 700; }
+    .trace-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+    .trace-item:last-child { border-bottom: none; }
+    .trace-num { flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: rgba(59,130,246,0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+    .trace-msg { line-height: 1.55; color: var(--muted); }
+    .trace-msg b { color: var(--fg); }
+
+    /* Threshold gauge */
+    .gauge-wrap { padding: 6px 0; }
+    .gauge { height: 22px; border-radius: 6px; overflow: hidden; position: relative; background: var(--bg); border: 1px solid var(--border); }
+    .gauge-fill { height: 100%; transition: width 0.25s ease; background: linear-gradient(90deg, var(--blue), var(--purple)); }
+    .gauge-marker { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--amber); }
+    .gauge-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-top: 6px; }
+    input[type=range] { width: 100%; accent-color: var(--blue); }
+    .verdict { margin-top: 12px; padding: 10px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; line-height: 1.5; }
+
     /* Misc */
     .space-y > * + * { margin-top: 8px; }
     .space-y-lg > * + * { margin-top: 16px; }
@@ -132,13 +198,14 @@
   <header>
     <div class="container">
       <h1>Gasper — LMD-GHOST Fork Choice</h1>
-      <p>Interactive visualization of Ethereum's fork choice rule</p>
+      <p>Interactive visualization of Ethereum's consensus core — fork choice, finality, and adversarial defenses</p>
     </div>
   </header>
 
   <div class="container">
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('interactive')">🌳 Interactive Fork Tree</button>
+      <button class="tab-btn active" onclick="switchTab('overview')">📖 Overview</button>
+      <button class="tab-btn" onclick="switchTab('interactive')">🌳 Interactive Fork Tree</button>
       <button class="tab-btn" onclick="switchTab('algorithm')">📐 Algorithm Step-by-Step</button>
       <button class="tab-btn" onclick="switchTab('gasper')">🏛️ Gasper = GHOST + Casper</button>
       <button class="tab-btn" onclick="switchTab('attacks')">⚔️ Attack Scenarios</button>
@@ -147,8 +214,120 @@
 
   <div class="container" style="padding-bottom:24px;">
 
+    <!-- ===== TAB 0: OVERVIEW ===== -->
+    <div id="tab-overview" class="tab-pane active">
+      <div class="hero mb">
+        <h2>How Ethereum Agrees on a Single Chain</h2>
+        <p>
+          Ethereum does not use a simple "longest chain wins" rule. It uses <strong class="c-fg">Gasper</strong>, a consensus
+          protocol built from two cooperating pieces: <strong class="c-blue">LMD-GHOST</strong>, the fork-choice rule that
+          selects the canonical head every 12 seconds, and <strong class="c-purple">Casper FFG</strong>, the finality gadget
+          that makes checkpoints economically irreversible every ~6.4 minutes. Validators express their view of the chain
+          with <strong class="c-fg">attestations</strong> — signed votes that simultaneously feed both mechanisms.
+        </p>
+      </div>
+
+      <div class="grid-4col mb">
+        <div class="stat"><div class="stat-val c-blue">12 s</div><div class="stat-lbl">One slot</div></div>
+        <div class="stat"><div class="stat-val c-purple">32</div><div class="stat-lbl">Slots per epoch</div></div>
+        <div class="stat"><div class="stat-val c-emerald">~6.4 min</div><div class="stat-lbl">One epoch</div></div>
+        <div class="stat"><div class="stat-val c-amber">⅔</div><div class="stat-lbl">Supermajority</div></div>
+      </div>
+
+      <div class="grid-2col mb">
+        <div class="card">
+          <h3>🏗️ Where Gasper Sits</h3>
+          <p class="xsmall c-muted mb">The consensus layer decides which block is canonical; the execution layer executes it.</p>
+          <svg viewBox="0 0 460 290" class="diagram">
+            <defs><marker id="ov" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker></defs>
+            <rect x="55" y="14" width="350" height="50" rx="9" fill="rgba(16,185,129,0.09)" stroke="var(--emerald)" stroke-width="1.5"/>
+            <text x="230" y="35" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">EXECUTION LAYER</text>
+            <text x="230" y="52" text-anchor="middle" fill="var(--muted)" font-size="9">EVM · transactions · state root</text>
+            <line x1="230" y1="64" x2="230" y2="88" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ov)"/>
+            <text x="240" y="80" fill="var(--muted)" font-size="8">head / safe / finalized</text>
+            <rect x="30" y="92" width="400" height="108" rx="10" fill="rgba(59,130,246,0.05)" stroke="var(--blue)" stroke-width="1.5"/>
+            <text x="230" y="112" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="700">CONSENSUS LAYER — GASPER</text>
+            <rect x="55" y="126" width="168" height="58" rx="8" fill="rgba(59,130,246,0.13)" stroke="var(--blue)"/>
+            <text x="139" y="147" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">LMD-GHOST</text>
+            <text x="139" y="163" text-anchor="middle" fill="var(--muted)" font-size="8">fork choice · every slot</text>
+            <text x="139" y="176" text-anchor="middle" fill="var(--muted)" font-size="8">→ canonical head</text>
+            <rect x="237" y="126" width="168" height="58" rx="8" fill="rgba(168,85,247,0.13)" stroke="var(--purple)"/>
+            <text x="321" y="147" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">CASPER FFG</text>
+            <text x="321" y="163" text-anchor="middle" fill="var(--muted)" font-size="8">finality · every epoch</text>
+            <text x="321" y="176" text-anchor="middle" fill="var(--muted)" font-size="8">→ justified / finalized</text>
+            <line x1="230" y1="200" x2="230" y2="224" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#ov)"/>
+            <rect x="75" y="228" width="310" height="46" rx="9" fill="rgba(6,182,212,0.08)" stroke="var(--cyan)"/>
+            <text x="230" y="247" text-anchor="middle" fill="var(--cyan)" font-size="10" font-weight="700">VALIDATOR ATTESTATIONS</text>
+            <text x="230" y="264" text-anchor="middle" fill="var(--muted)" font-size="9">signed votes broadcast by the beacon committee</text>
+          </svg>
+        </div>
+        <div class="card">
+          <h3>✉️ One Attestation, Two Jobs</h3>
+          <p class="xsmall c-muted mb">A single signed message carries the data both protocols need.</p>
+          <svg viewBox="0 0 460 290" class="diagram">
+            <defs><marker id="ov2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker></defs>
+            <rect x="125" y="10" width="210" height="48" rx="9" fill="var(--bg)" stroke="var(--cyan)" stroke-width="2"/>
+            <text x="230" y="30" text-anchor="middle" fill="var(--cyan)" font-size="11" font-weight="700">ATTESTATION</text>
+            <text x="230" y="47" text-anchor="middle" fill="var(--muted)" font-size="9">slot · committee · BLS signature</text>
+            <line x1="190" y1="58" x2="110" y2="100" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#ov2)"/>
+            <line x1="270" y1="58" x2="350" y2="100" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#ov2)"/>
+            <rect x="20" y="104" width="185" height="70" rx="9" fill="rgba(59,130,246,0.08)" stroke="var(--blue)"/>
+            <text x="112" y="125" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">HEAD VOTE</text>
+            <text x="112" y="142" text-anchor="middle" fill="var(--muted)" font-size="9">beacon_block_root</text>
+            <text x="112" y="159" text-anchor="middle" fill="var(--muted)" font-size="9">"this is the best block I see"</text>
+            <rect x="255" y="104" width="185" height="70" rx="9" fill="rgba(168,85,247,0.08)" stroke="var(--purple)"/>
+            <text x="347" y="125" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">FFG VOTE</text>
+            <text x="347" y="142" text-anchor="middle" fill="var(--muted)" font-size="9">source → target</text>
+            <text x="347" y="159" text-anchor="middle" fill="var(--muted)" font-size="9">"justify this checkpoint pair"</text>
+            <line x1="112" y1="174" x2="112" y2="206" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#ov2)"/>
+            <line x1="347" y1="174" x2="347" y2="206" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#ov2)"/>
+            <rect x="20" y="210" width="185" height="60" rx="9" fill="rgba(59,130,246,0.14)" stroke="var(--blue)"/>
+            <text x="112" y="232" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">GHOST WEIGHT</text>
+            <text x="112" y="250" text-anchor="middle" fill="var(--muted)" font-size="9">heaviest subtree → HEAD</text>
+            <rect x="255" y="210" width="185" height="60" rx="9" fill="rgba(168,85,247,0.14)" stroke="var(--purple)"/>
+            <text x="347" y="232" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">LINK TALLY</text>
+            <text x="347" y="250" text-anchor="middle" fill="var(--muted)" font-size="9">≥⅔ → justified / finalized</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="grid-2col">
+        <div class="card">
+          <h3>📚 Vocabulary</h3>
+          <div class="def-row"><div class="def-term">Slot</div><div class="def-desc">A 12-second opportunity for one proposer to propose a block. Skipped slots are allowed.</div></div>
+          <div class="def-row"><div class="def-term">Epoch</div><div class="def-desc">A group of 32 slots (~6.4 min). Checkpoints are the first block of an epoch and FFG is evaluated at epoch boundaries.</div></div>
+          <div class="def-row"><div class="def-term">Attestation</div><div class="def-desc">A validator's signed vote. It carries both a head vote (for GHOST) and a source→target vote (for Casper FFG).</div></div>
+          <div class="def-row"><div class="def-term">Committee</div><div class="def-desc">A randomly assigned subset of validators that attests in a given slot; assignments rotate over epochs.</div></div>
+          <div class="def-row"><div class="def-term">Effective balance</div><div class="def-desc">The stake counted for voting weight, capped at 32 ETH. Larger deposits do not vote proportionally more.</div></div>
+          <div class="def-row"><div class="def-term">Justified</div><div class="def-desc">A checkpoint backed by a supermajority (≥⅔) of attesting stake. It is the starting point for GHOST.</div></div>
+          <div class="def-row"><div class="def-term">Finalized</div><div class="def-desc">A justified checkpoint whose immediate child is also justified. Reverting it would require slashing ≥⅓ of stake.</div></div>
+          <div class="def-row"><div class="def-term">HEAD</div><div class="def-desc">The tip of the chain chosen by LMD-GHOST from the latest justified checkpoint. It is not the same as finalized.</div></div>
+          <div class="def-row"><div class="def-term">Supermajority link</div><div class="def-desc">A source→target attestation link supported by ≥⅔ of total active balance; the building block of finality.</div></div>
+        </div>
+        <div class="space-y-lg">
+          <div class="card">
+            <h3>🔁 The Cycle, End to End</h3>
+            <div class="trace-item"><div class="trace-num">1</div><div class="trace-msg"><b>Propose.</b> One proposer per slot builds a block on top of the chain head computed by GHOST.</div></div>
+            <div class="trace-item"><div class="trace-num">2</div><div class="trace-msg"><b>Attest.</b> Committees vote for that block (head vote) and for a checkpoint pair (FFG vote). Attestations are usually included in the next slot.</div></div>
+            <div class="trace-item"><div class="trace-num">3</div><div class="trace-msg"><b>Fork choice.</b> Every node re-runs LMD-GHOST using only each validator's <em>latest</em> message, producing a new HEAD.</div></div>
+            <div class="trace-item"><div class="trace-num">4</div><div class="trace-msg"><b>Finalize.</b> At the next epoch boundary, Casper FFG tallies links. With ≥⅔ support, a checkpoint becomes justified; the parent of a justified child becomes finalized.</div></div>
+            <div class="trace-item"><div class="trace-num">5</div><div class="trace-msg"><b>Hand off.</b> The consensus layer sends <code class="mono">head</code>, <code class="mono">safe</code> and <code class="mono">finalized</code> to the execution client via <code class="mono">engine_forkchoiceUpdatedV3</code>.</div></div>
+          </div>
+          <div class="note note-emerald">
+            <strong>Two different guarantees.</strong> LMD-GHOST provides <strong>liveness</strong> — there is always a head, even during heavy network delay. Casper FFG provides <strong>safety</strong> — once finalized, a block cannot be reverted without an attacker being slashed for at least 1/3 of total stake.
+          </div>
+          <div class="note note-purple">
+            <strong>Why "latest message driven"?</strong> If old attestations kept counting, a validator could vote for two branches and effectively double-vote forever. LMD keeps only the newest vote per validator, which makes equivocation detectable and slashable.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== TAB 1: INTERACTIVE ===== -->
-    <div id="tab-interactive" class="tab-pane active">
+    <div id="tab-interactive" class="tab-pane">
+      <div class="note mb">
+        <strong>How to read this tree.</strong> Each circle is a block; time flows left to right by slot. Cyan dots are validator votes attached to the block they vote for. GHOST starts at the justified checkpoint and, at every fork, follows the child whose <em>entire subtree</em> holds the most attestation weight. Change a vote in the sidebar and watch the head move.
+      </div>
       <div class="grid-main">
         <!-- Sidebar -->
         <div class="space-y-lg">
@@ -185,18 +364,35 @@
             </div>
             <canvas id="treeCanvas"></canvas>
             <div id="tooltip" class="tooltip"></div>
-            <div id="stepInfo"><b>GHOST Step:</b> <span id="stepText"></span></div>
+            <div id="stepInfo"><span id="stepText"></span></div>
           </div>
           <div class="card mt">
             <h3>📊 Subtree Weights</h3>
+            <p class="xsmall c-muted mb">Per-block totals and the validators contributing to them. Weight includes votes for all descendants.</p>
             <div class="grid-4col" id="weightTable"></div>
           </div>
+        </div>
+      </div>
+
+      <div class="grid-2col mt">
+        <div class="card">
+          <h3>📈 Vote Composition</h3>
+          <p class="xsmall c-muted mb">Each segment is one validator's effective balance (32 ETH). Bars are scaled to the heaviest subtree so you can compare branches at a glance.</p>
+          <div id="weightChart"></div>
+        </div>
+        <div class="card">
+          <h3>🧭 GHOST Decision Trace + Reasoning</h3>
+          <p class="xsmall c-muted mb">The greedy walk from the justified root to the head. Expand each step to see <b>why</b> GHOST made that choice — which votes count, how weights are summed, and what the rule forbids. Use <b>Step</b> to advance.</p>
+          <div id="tracePanel"></div>
         </div>
       </div>
     </div>
 
     <!-- ===== TAB 2: ALGORITHM ===== -->
     <div id="tab-algorithm" class="tab-pane">
+      <div class="note mb">
+        <strong>Read this first.</strong> LMD-GHOST is deliberately simple: start at the latest justified checkpoint, look at the direct children of the current block, and keep the one with the largest subtree weight. "Subtree weight" means the sum of effective balances of validators whose <em>latest</em> attestation points anywhere inside that child's subtree. Repeat until you reach a leaf.
+      </div>
       <div class="grid-2col">
         <div class="card">
           <h3>LMD-GHOST Pseudocode</h3>
@@ -261,12 +457,77 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- ===== TAB 3: GASPER ===== -->
+      <div class="card mt">
+        <h3>🔄 The get_head() Loop, Illustrated</h3>
+        <p class="xsmall c-muted mb">The loop is greedy — it never backtracks. Once a child loses a comparison at one level, its whole subtree is ignored.</p>
+        <svg viewBox="0 0 840 260" class="diagram">
+          <defs><marker id="fl" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker></defs>
+          <rect x="15" y="80" width="150" height="52" rx="9" fill="rgba(168,85,247,0.12)" stroke="var(--purple)"/>
+          <text x="90" y="101" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">START</text>
+          <text x="90" y="117" text-anchor="middle" fill="var(--muted)" font-size="9">justified checkpoint</text>
+          <line x1="165" y1="106" x2="205" y2="106" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <rect x="210" y="80" width="145" height="52" rx="9" fill="rgba(59,130,246,0.12)" stroke="var(--blue)"/>
+          <text x="282" y="101" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">GET CHILDREN</text>
+          <text x="282" y="117" text-anchor="middle" fill="var(--muted)" font-size="9">of current head</text>
+          <line x1="355" y1="106" x2="398" y2="106" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <polygon points="475,72 535,106 475,140 415,106" fill="rgba(245,158,11,0.10)" stroke="var(--amber)"/>
+          <text x="475" y="103" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">children?</text>
+          <text x="475" y="117" text-anchor="middle" fill="var(--muted)" font-size="8">any left</text>
+          <line x1="535" y1="106" x2="595" y2="50" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <text x="562" y="72" fill="var(--muted)" font-size="9">no</text>
+          <rect x="600" y="24" width="175" height="50" rx="9" fill="rgba(245,158,11,0.14)" stroke="var(--amber)" stroke-width="2"/>
+          <text x="687" y="45" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">RETURN HEAD ✓</text>
+          <text x="687" y="62" text-anchor="middle" fill="var(--muted)" font-size="9">leaf reached</text>
+          <line x1="475" y1="140" x2="475" y2="184" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <text x="486" y="165" fill="var(--muted)" font-size="9">yes</text>
+          <rect x="365" y="190" width="220" height="52" rx="9" fill="rgba(6,182,212,0.10)" stroke="var(--cyan)"/>
+          <text x="475" y="211" text-anchor="middle" fill="var(--cyan)" font-size="10" font-weight="700">WEIGHT EACH CHILD</text>
+          <text x="475" y="228" text-anchor="middle" fill="var(--muted)" font-size="9">sum latest votes in its subtree</text>
+          <line x1="585" y1="216" x2="645" y2="216" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <rect x="650" y="190" width="175" height="52" rx="9" fill="rgba(59,130,246,0.14)" stroke="var(--blue)"/>
+          <text x="737" y="211" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">PICK MAX → HEAD</text>
+          <text x="737" y="228" text-anchor="middle" fill="var(--muted)" font-size="9">tie-break by block hash</text>
+          <path d="M 825 216 H 832 V 140 H 282 V 132" fill="none" stroke="var(--blue)" stroke-width="1.5" marker-end="url(#fl)"/>
+          <text x="560" y="136" text-anchor="middle" fill="var(--blue)" font-size="9">repeat from new head</text>
+          <text x="20" y="255" fill="var(--muted)" font-size="9">Complexity: O(blocks × validators) per call — cheap enough to recompute every slot.</text>
+        </svg>
+      </div>
+
+      <div class="grid-2col mt">
+        <div class="card">
+          <h3>🧩 Worked Example — "Simple Majority"</h3>
+          <div class="trace-item"><div class="trace-num">1</div><div class="trace-msg">Start at <b>A</b>, the latest justified checkpoint. Everything before it is already frozen by Casper FFG.</div></div>
+          <div class="trace-item"><div class="trace-num">2</div><div class="trace-msg">A has two children: <b>B</b> and <b>C</b>. V1–V3 vote for D (inside B's subtree) = 96 ETH; V4–V5 vote for E (inside C's subtree) = 64 ETH.</div></div>
+          <div class="trace-item"><div class="trace-num">3</div><div class="trace-msg"><b>B wins (96 &gt; 64)</b> even though both branches have the same length. This is why GHOST beats longest-chain under network splits.</div></div>
+          <div class="trace-item"><div class="trace-num">4</div><div class="trace-msg">Move to B. Its only child <b>D</b> holds 96 ETH and is a leaf, so <b>D becomes HEAD</b>.</div></div>
+          <div class="trace-item"><div class="trace-num">5</div><div class="trace-msg">Change V3's vote from D to E in the interactive tab: C's subtree becomes 96 ETH and the head flips to <b>E</b>. LMD makes votes powerful but also sensitive.</div></div>
+          <div class="note mt">Notice that B "wins" because of votes for its <em>grandchild</em> D. Weight flows upward through ancestors — that is what makes the rule subtree-based rather than block-based.</div>
+        </div>
+        <div class="card">
+          <h3>⚖️ Chain-Selection Rules Compared</h3>
+          <table class="cmp">
+            <thead><tr><th>Aspect</th><th>Longest Chain (PoW)</th><th>LMD-GHOST</th><th>Gasper</th></tr></thead>
+            <tbody>
+              <tr><td>Votes are</td><td>Accumulated hash power</td><td>Latest attestations only</td><td>Latest attestations only</td></tr>
+              <tr><td>Picks</td><td>Longest / most-work chain</td><td>Heaviest observed subtree</td><td>Heaviest subtree from justified root</td></tr>
+              <tr><td>Runs</td><td>Continuously</td><td>Every slot (12 s)</td><td>Head every slot, FFG every epoch</td></tr>
+              <tr><td>Finality</td><td>Probabilistic (~60 min)</td><td>None — head can flip</td><td>Economic (~13 min, 2 epochs)</td></tr>
+              <tr><td>On partition</td><td>Shorter branch discarded</td><td>Both branches keep weight; split resolved when votes reconcile</td><td>FFG refuses to finalize until ≥⅔ agrees</td></tr>
+            </tbody>
+          </table>
+          <div class="note note-purple mt"><strong>Key trade-off.</strong> GHOST maximizes liveness by always choosing some head, but it cannot by itself guarantee that the choice is permanent. Casper FFG adds the irreversible layer on top.</div>
+        </div>
+      </div>
+     </div>
+
+     <!-- ===== TAB 3: GASPER ===== -->
     <div id="tab-gasper" class="tab-pane">
       <h2>Gasper = LMD-GHOST + Casper FFG</h2>
       <p class="subtitle mb">Two protocols combined into one consensus mechanism</p>
+      <div class="note mb">
+        <strong>Why combine them?</strong> A pure fork-choice rule always has an answer, but its answer can change — that is fine for liveness and terrible for finality. A pure finality gadget can decide safety but may stall when the network is partitioned. Gasper layers the finality gadget on top of the fork-choice rule: FFG sets the <em>starting point</em> (latest justified checkpoint) and GHOST walks from there to the head.
+      </div>
 
       <div class="grid-3col mb">
         <div class="card card-thick gasper-card" style="border-color:rgba(59,130,246,0.5);">
@@ -389,12 +650,61 @@ votes(S→T) ≥ <span class="c-purple">⅔ × total_active_balance</span></code
           </div>
         </div>
       </div>
+
+      <div class="card mt">
+        <h3>🗓️ Inside an Epoch — 32 Slots</h3>
+        <p class="xsmall c-muted mb">Validators are split into committees across the epoch. An attestation for slot <em>n</em> is normally included in slot <em>n+1</em>, so GHOST always decides with slightly delayed information.</p>
+        <div id="epochTimeline"></div>
+        <div class="note mt">At the last slot of an epoch, the beacon state processes all attestations from that epoch: it tallies FFG links, updates justification/finalization, and shuffles committees for the next epoch.</div>
+      </div>
+
+      <div class="grid-2col mt">
+        <div class="card">
+          <h3>🔀 Checkpoint State Machine</h3>
+          <p class="xsmall c-muted mb">A checkpoint moves through three states. Only adjacent justified checkpoints produce finality.</p>
+          <svg viewBox="0 0 460 250" class="diagram">
+            <defs><marker id="ff" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker></defs>
+            <rect x="25" y="95" width="115" height="55" rx="9" fill="var(--bg)" stroke="var(--border)" stroke-width="1.5"/>
+            <text x="82" y="118" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="700">UNJUSTIFIED</text>
+            <text x="82" y="135" text-anchor="middle" fill="var(--muted)" font-size="8">epoch boundary block</text>
+            <line x1="140" y1="122" x2="180" y2="122" stroke="var(--purple)" stroke-width="1.5" marker-end="url(#ff)"/>
+            <text x="160" y="112" text-anchor="middle" fill="#c084fc" font-size="8">≥⅔ votes</text>
+            <rect x="185" y="95" width="110" height="55" rx="9" fill="rgba(168,85,247,0.13)" stroke="var(--purple)" stroke-width="2"/>
+            <text x="240" y="118" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">JUSTIFIED</text>
+            <text x="240" y="135" text-anchor="middle" fill="var(--muted)" font-size="8">GHOST starts here</text>
+            <line x1="295" y1="122" x2="335" y2="122" stroke="var(--emerald)" stroke-width="1.5" marker-end="url(#ff)"/>
+            <text x="315" y="112" text-anchor="middle" fill="#10b981" font-size="8">child justified</text>
+            <rect x="340" y="95" width="100" height="55" rx="9" fill="rgba(16,185,129,0.13)" stroke="var(--emerald)" stroke-width="2"/>
+            <text x="390" y="118" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">FINALIZED</text>
+            <text x="390" y="135" text-anchor="middle" fill="var(--muted)" font-size="8">irreversible</text>
+            <rect x="25" y="185" width="415" height="46" rx="8" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.4)"/>
+            <text x="232" y="204" text-anchor="middle" fill="var(--red)" font-size="9" font-weight="700">SLASHING CONDITIONS</text>
+            <text x="232" y="220" text-anchor="middle" fill="var(--muted)" font-size="8">Double vote: two conflicting FFG votes in one epoch · Surround vote: a vote that brackets another</text>
+            <text x="230" y="40" text-anchor="middle" fill="var(--muted)" font-size="9">S → T justified when votes(S→T) ≥ ⅔ of active balance</text>
+            <text x="230" y="58" text-anchor="middle" fill="var(--muted)" font-size="9">S finalized when T is justified and T.epoch = S.epoch + 1</text>
+          </svg>
+        </div>
+        <div class="card">
+          <h3>📊 Supermajority Threshold Explorer</h3>
+          <p class="xsmall c-muted mb">Drag to change the share of active stake voting for a source→target link. The amber line marks the ⅔ threshold.</p>
+          <div class="gauge-wrap">
+            <input type="range" id="participation" min="0" max="100" value="72" oninput="updateGauge()">
+            <div class="gauge"><div class="gauge-fill" id="gaugeFill" style="width:72%;"></div><div class="gauge-marker" style="left:66.7%;"></div></div>
+            <div class="gauge-labels"><span>0%</span><span>⅔ = 66.7%</span><span>100%</span></div>
+            <div class="verdict" id="gaugeVerdict"></div>
+          </div>
+          <div class="note mt"><strong>Inactivity leak.</strong> If more than ⅓ of stake goes offline, finality stalls. Ethereum gradually drains the offline validators' balances until the remaining online stake is again ≥⅔, so the chain eventually resumes finalizing.</div>
+        </div>
+      </div>
     </div>
 
     <!-- ===== TAB 4: ATTACKS ===== -->
     <div id="tab-attacks" class="tab-pane">
       <h2>Attack Scenarios & Defenses</h2>
       <p class="subtitle mb">How the fork choice handles adversarial behavior</p>
+      <div class="note mb">
+        <strong>Threat model.</strong> Gasper assumes an adversary can control network scheduling and a fraction of total stake, but cannot break BLS signatures. Below ⅓ stake the chain keeps finalizing; at or above ⅓ finality can be delayed indefinitely; at or above ⅔ an attacker can build a conflicting finalized chain. The defenses are economic (slashing) plus protocol rules (proposer boosting, weak subjectivity, inactivity leak).
+      </div>
 
       <div class="space-y-lg">
         <div class="card">
@@ -461,12 +771,86 @@ votes(S→T) ≥ <span class="c-purple">⅔ × total_active_balance</span></code
 <span class="c-muted">// Syncs from recent finalized state, not genesis</span></code></pre>
           </div>
         </div>
+
+        <div class="card">
+          <div class="attack-title"><span class="attack-tag">ATTACK</span><h3 style="margin:0;">≥⅓ Stake — Liveness / Finality Stall</h3></div>
+          <div class="grid-2col">
+            <div class="xsmall c-muted space-y">
+              <p><strong class="c-fg">How it works:</strong> With more than one third of total stake, an adversary can simply refuse to attest. Honest validators hold ≤⅔, so no supermajority link can form and <strong class="c-red">finality stops advancing</strong>.</p>
+              <p><strong class="c-fg">Important nuance:</strong> the chain does <em>not</em> halt — LMD-GHOST still picks a head every slot. Only the economic finality guarantee pauses.</p>
+              <p><strong class="c-emerald">Defense — Inactivity Leak:</strong> Non-attesting validators lose effective balance each epoch until the active, voting set once again controls ≥⅔. Finality then resumes automatically; the attacker's stake has been burned.</p>
+            </div>
+            <div style="background:var(--bg);border-radius:8px;padding:16px;">
+              <svg viewBox="0 0 300 150" style="width:100%;">
+                <rect x="20" y="40" width="80" height="34" rx="6" fill="rgba(239,68,68,0.15)" stroke="var(--red)"/>
+                <text x="60" y="62" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">34% offline</text>
+                <rect x="100" y="40" width="170" height="34" rx="6" fill="rgba(59,130,246,0.15)" stroke="var(--blue)"/>
+                <text x="185" y="62" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700">66% honest</text>
+                <line x1="100" y1="25" x2="100" y2="85" stroke="var(--amber)" stroke-dasharray="4 3"/>
+                <text x="100" y="18" text-anchor="middle" fill="#fbbf24" font-size="9">⅔ needed → missed</text>
+                <text x="150" y="105" text-anchor="middle" fill="var(--red)" font-size="10" font-weight="700">❌ No supermajority link</text>
+                <text x="150" y="125" text-anchor="middle" fill="var(--cyan)" font-size="9">head still produced every 12 s</text>
+                <text x="150" y="142" text-anchor="middle" fill="var(--emerald)" font-size="9">leak drains attacker until honest ≥ ⅔</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="attack-title"><span class="attack-tag">ATTACK</span><h3 style="margin:0;">Avalanche Attack</h3></div>
+          <div class="xsmall c-muted space-y">
+            <p><strong class="c-fg">How it works:</strong> An attacker with roughly 30–40% of stake withholds attestations for several slots, then releases a burst of them on a competing branch. The sudden weight can flip GHOST's head and justify a conflicting checkpoint before honest validators react.</p>
+            <p><strong class="c-fg">Why it's dangerous:</strong> It targets the <em>latest message</em> property — withheld votes become "new" all at once and outweigh honest votes that were already counted.</p>
+            <p><strong class="c-emerald">Defenses:</strong> Attestation deadline (late messages are ignored for fork choice), proposer boosting for the current slot, and ≥⅔ FFG threshold, which requires far more stake than the attacker controls to actually finalize a conflicting checkpoint.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2col mt">
+        <div class="card">
+          <h3>📉 Stake Threshold Map</h3>
+          <p class="xsmall c-muted mb">What different fractions of adversarial stake can and cannot do on Ethereum mainnet.</p>
+          <svg viewBox="0 0 460 190" class="diagram">
+            <rect x="20" y="40" width="123" height="36" rx="6" fill="rgba(16,185,129,0.15)" stroke="var(--emerald)"/>
+            <text x="81" y="63" text-anchor="middle" fill="#10b981" font-size="9" font-weight="700">0–33%</text>
+            <rect x="143" y="40" width="123" height="36" rx="6" fill="rgba(245,158,11,0.15)" stroke="var(--amber)"/>
+            <text x="204" y="63" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="700">33–50%</text>
+            <rect x="266" y="40" width="82" height="36" rx="6" fill="rgba(239,68,68,0.15)" stroke="var(--red)"/>
+            <text x="307" y="63" text-anchor="middle" fill="var(--red)" font-size="9" font-weight="700">50–66%</text>
+            <rect x="348" y="40" width="92" height="36" rx="6" fill="rgba(239,68,68,0.28)" stroke="var(--red)" stroke-width="2"/>
+            <text x="394" y="63" text-anchor="middle" fill="var(--red)" font-size="9" font-weight="700">&gt;66%</text>
+            <line x1="143" y1="28" x2="143" y2="84" stroke="var(--amber)"/>
+            <line x1="348" y1="28" x2="348" y2="84" stroke="var(--red)"/>
+            <text x="20" y="98" fill="var(--emerald)" font-size="8">finality safe</text>
+            <text x="150" y="98" fill="#fbbf24" font-size="8">finality can stall</text>
+            <text x="268" y="98" fill="var(--red)" font-size="8">head reorgs</text>
+            <text x="356" y="98" fill="var(--red)" font-size="8">safety break</text>
+            <text x="230" y="130" text-anchor="middle" fill="var(--muted)" font-size="9">⅓ = liveness boundary · ⅔ = safety boundary</text>
+            <text x="230" y="152" text-anchor="middle" fill="var(--muted)" font-size="9">No matter the fraction, equivocation is slashable.</text>
+            <text x="230" y="170" text-anchor="middle" fill="var(--emerald)" font-size="9">Cost of a safety failure: ≥ 1/3 of all staked ETH burned.</text>
+          </svg>
+        </div>
+        <div class="card">
+          <h3>🛡️ Defense Matrix</h3>
+          <table class="cmp">
+            <thead><tr><th>Attack</th><th>Stake</th><th>Goal</th><th>Primary defense</th></tr></thead>
+            <tbody>
+              <tr><td>Balancing</td><td>~1–2%</td><td>Delay finality</td><td>Proposer boost (40%)</td></tr>
+              <tr><td>Ex-ante reorg</td><td>Proposer slot</td><td>Steal MEV</td><td>Proposer boost + attestation deadline</td></tr>
+              <tr><td>Avalanche</td><td>~30–40%</td><td>Flip head / justify fork</td><td>Late-message cutoff + ⅔ FFG</td></tr>
+              <tr><td>Liveness stall</td><td>&gt;⅓</td><td>Stop finality</td><td>Inactivity leak</td></tr>
+              <tr><td>Long-range</td><td>Historical keys</td><td>Rewrite deep history</td><td>Weak subjectivity checkpoints</td></tr>
+              <tr><td>Safety break</td><td>≥⅔</td><td>Finalize two chains</td><td>Slashing (economically irrational)</td></tr>
+            </tbody>
+          </table>
+          <div class="note note-emerald mt"><strong>Design philosophy.</strong> Gasper does not try to make attacks impossible. It makes them either detectable and punishable (slashing) or slower than honest validators can react (proposer boost, attestation deadlines).</div>
+        </div>
       </div>
     </div>
 
   </div>
 
-  <footer>Gasper / LMD-GHOST Fork Choice Visualizer · Ethereum Consensus Layer</footer>
+  <footer>Gasper / LMD-GHOST Fork Choice Visualizer · Ethereum Consensus Layer<br><span style="font-size:11px;">Educational model — validator counts and weights are simplified; thresholds and protocol names follow the beacon chain spec.</span></footer>
 
 <script>
 // ====== DATA ======
@@ -561,7 +945,7 @@ const SCENARIOS = [
 
 let currentScenario=0, state={}, ghostSteps=[], ghostStepIndex=-1, blockPositions={};
 
-function init(){ renderScenarios(); loadScenario(0); }
+function init(){ renderScenarios(); loadScenario(0); renderEpochTimeline(); updateGauge(); }
 
 function renderScenarios(){
   document.getElementById('scenarioList').innerHTML = SCENARIOS.map((s,i)=>`
@@ -587,13 +971,73 @@ function getWeight(bid){ let w=0; state.validators.forEach(v=>{if(isAncestor(bid
 
 function runGHOSTFull(){
   const steps=[]; let head=state.justifiedRoot;
-  steps.push({type:'start',block:head,msg:`Start from justified root: ${head}`});
+  const byId={}; state.blocks.forEach(b=>byId[b.id]=b);
+  const lbl=id=>byId[id]?(byId[id].label||id):id;
+  const votersOf=id=>state.validators.filter(v=>isAncestor(id,v.vote));
+  const subtreeOf=id=>state.blocks.filter(b=>isAncestor(id,b.id)).map(b=>b.label||b.id);
+  const totalStake=state.validators.reduce((a,v)=>a+v.balance,0);
+
+  steps.push({
+    type:'start', block:head,
+    title:'Anchor at the justified checkpoint',
+    rule:'Casper FFG → GHOST',
+    msg:`Start from justified root: ${head}`,
+    why:`GHOST does <b>not</b> walk from genesis. It begins at the latest justified checkpoint because Casper FFG has already made everything before it economically final. Older blocks cannot become HEAD even if they later attract votes.`,
+    bullets:[
+      `Anchor: <b>${lbl(head)}</b> — slot ${byId[head]?.slot ?? '?'}, status ${byId[head]?.status ?? '?'}.`,
+      `Active stake in this scenario: <b>${totalStake} ETH</b> across ${state.validators.length} validators.`,
+      `Only descendants of ${lbl(head)} are candidates; earlier forks are out of scope.`
+    ]
+  });
+
   while(true){
     const ch=getChildren(head);
-    if(!ch.length){steps.push({type:'head',block:head,msg:`${head} is a leaf → HEAD selected!`});break;}
-    const ws=ch.map(c=>({id:c.id,weight:getWeight(c.id)})).sort((a,b)=>b.weight-a.weight);
-    steps.push({type:'compare',block:head,children:ws,chosen:ws[0].id,msg:`At ${head}: ${ws.map(w=>`${w.id}(${w.weight})`).join(' vs ')} → pick ${ws[0].id} (weight ${ws[0].weight})`});
-    head=ws[0].id;
+    if(!ch.length){
+      const path=[]; let c=head;
+      while(c){path.unshift(lbl(c)); c=byId[c]?.parent;}
+      const vs=votersOf(head);
+      steps.push({
+        type:'head', block:head,
+        title:'Leaf reached → HEAD selected',
+        rule:'Termination',
+        msg:`${head} is a leaf → HEAD selected!`,
+        why:`<b>${lbl(head)}</b> has no children, so the greedy walk stops. That block becomes the canonical HEAD handed to the execution client. HEAD is a fork-choice result, <b>not finality</b> — a later set of attestations can produce a different head before FFG finalizes a checkpoint.`,
+        bullets:[
+          `Canonical path: <b>${path.join(' → ')}</b>.`,
+          `Weight behind HEAD: <b>${getWeight(head)} ETH</b>${vs.length?` from ${vs.map(v=>v.name).join(', ')}`:' (no latest votes in its subtree)'}.`,
+          `Justified root stays ${lbl(state.justifiedRoot)}; finalized history is unchanged.`
+        ]
+      });
+      break;
+    }
+
+    const ws=ch.map(c=>({id:c.id,weight:getWeight(c.id),voters:votersOf(c.id),subtree:subtreeOf(c.id)}))
+               .sort((a,b)=>b.weight-a.weight);
+    const win=ws[0], second=ws[1];
+    const tie=!!second&&win.weight===second.weight;
+    const bullets=ws.map((w,i)=>`<b>${w.id}</b> — ${w.weight} ETH${w.voters.length?` (${w.voters.map(v=>v.name).join(', ')})`:' (no latest votes)'}; subtree: ${w.subtree.join(', ')}${i===0?' ← chosen':''}`);
+    if(tie){
+      bullets.push(`<b>Tie:</b> real clients resolve equal weights with a deterministic block-hash tie-break; this demo keeps the first listed child.`);
+    }else if(second){
+      const margin=win.weight-second.weight, pct=totalStake?Math.round(margin/totalStake*100):0;
+      bullets.push(`<b>Margin:</b> ${margin} ETH (${pct}% of active stake) — decisive under the heaviest-subtree rule.`);
+    }else{
+      bullets.push(`<b>Only child:</b> no rival branch, so GHOST simply follows it.`);
+    }
+
+    steps.push({
+      type:'compare', block:head, children:ws, chosen:win.id,
+      title:`Compare children of ${lbl(head)}`,
+      rule:'Heaviest subtree',
+      msg:`At ${head}: ${ws.map(w=>`${w.id}(${w.weight})`).join(' vs ')} → pick ${win.id} (weight ${win.weight})`,
+      why: tie
+        ? `${lbl(head)} has ${ch.length} children with <b>equal weight</b>. Every node must still agree on one branch, so Ethereum applies a deterministic tie-break instead of guessing.`
+        : second
+          ? `${lbl(head)} has ${ch.length} children. Each validator's <b>latest</b> attestation is counted exactly once and credited to the child that is an ancestor of the block it votes for — including votes for grandchildren. <b>${win.id}</b> attracts ${win.weight} ETH versus ${second.weight} ETH for ${second.id}, so the greedy rule commits to ${win.id} now and never revisits rejected branches.`
+          : `${lbl(head)} has a <b>single child</b>, ${win.id}. With no competing branch there is no weight comparison to make — GHOST follows it directly.`,
+      bullets
+    });
+    head=win.id;
   }
   return steps;
 }
@@ -602,7 +1046,7 @@ function runGHOST(){
   ghostSteps=runGHOSTFull(); ghostStepIndex=ghostSteps.length-1;
   const hs=ghostSteps.find(s=>s.type==='head');
   if(hs){state.head=hs.block; state.selectedPath=[]; const m={}; state.blocks.forEach(b=>m[b.id]=b); let c=state.head; while(c){state.selectedPath.push(c);c=m[c]?.parent;}}
-  renderTree(); renderWeightTable(); showStep(ghostSteps[ghostStepIndex]);
+  renderTree(); renderWeightTable(); renderWeightChart(); renderTrace(); showStep(ghostSteps[ghostStepIndex],ghostStepIndex);
 }
 
 function stepGHOST(){
@@ -610,12 +1054,96 @@ function stepGHOST(){
   ghostStepIndex++; if(ghostStepIndex>=ghostSteps.length)ghostStepIndex=0;
   state.selectedPath=[]; state.head=null;
   for(let i=0;i<=ghostStepIndex;i++){const s=ghostSteps[i]; if(s.type==='start'||s.type==='compare'){if(!state.selectedPath.includes(s.block))state.selectedPath.push(s.block);} if(s.type==='compare'&&!state.selectedPath.includes(s.chosen))state.selectedPath.push(s.chosen); if(s.type==='head'){state.head=s.block;if(!state.selectedPath.includes(s.block))state.selectedPath.push(s.block);}}
-  renderTree(); renderWeightTable(); showStep(ghostSteps[ghostStepIndex]);
+  renderTree(); renderWeightTable(); renderWeightChart(); renderTrace(); showStep(ghostSteps[ghostStepIndex],ghostStepIndex);
 }
 
-function resetGHOST(){ ghostStepIndex=-1; state.selectedPath=[]; state.head=null; document.getElementById('stepInfo').style.display='none'; renderTree(); renderWeightTable(); }
+function resetGHOST(){ ghostStepIndex=-1; state.selectedPath=[]; state.head=null; document.getElementById('stepInfo').style.display='none'; renderTree(); renderWeightTable(); renderWeightChart(); renderTrace(); }
 
-function showStep(s){if(!s)return; document.getElementById('stepInfo').style.display='block'; document.getElementById('stepText').textContent=s.msg;}
+function showStep(s,i){
+  if(!s)return;
+  const box=document.getElementById('stepInfo'); box.style.display='block'; box.scrollTop=0;
+  document.getElementById('stepText').innerHTML=`
+    <div class="step-head">
+      <span class="step-badge">STEP ${i+1}</span>
+      <span class="step-title">${s.title||s.msg}</span>
+      ${s.rule?`<span class="step-rule">${s.rule}</span>`:''}
+    </div>
+    <div class="step-msg">${s.msg}</div>
+    <div class="step-why">${s.why||''}</div>
+    ${s.bullets&&s.bullets.length?`<ul class="step-list">${s.bullets.map(x=>`<li>${x}</li>`).join('')}</ul>`:''}`;
+}
+
+function renderWeightChart(){
+  const el=document.getElementById('weightChart'); if(!el||!state.blocks)return;
+  const rows=state.blocks.map(b=>({b,w:getWeight(b.id),vs:state.validators.filter(v=>isAncestor(b.id,v.vote))}));
+  const max=Math.max(1,...rows.map(r=>r.w));
+  el.innerHTML=rows.map(r=>{
+    const segs=r.vs.map(v=>`<div class="bar-seg" style="width:${(v.balance/max)*100}%;background:${v.color};" title="${v.name} → ${r.b.id} (${v.balance} ETH)"></div>`).join('');
+    const bc=state.head===r.b.id?'var(--amber)':(state.selectedPath.includes(r.b.id)?'var(--blue)':'var(--border)');
+    return `<div class="bar-row"><span class="bold" style="color:${bc};">${r.b.label}</span><div class="bar-track" style="border-color:${bc};">${segs}</div><span class="bar-num">${r.w} ETH</span></div>`;
+  }).join('');
+}
+
+function renderTrace(){
+  const el=document.getElementById('tracePanel'); if(!el)return;
+  if(ghostStepIndex<0||!ghostSteps.length){el.innerHTML='<div class="xsmall c-muted">Press <b>▶ Run GHOST</b> or <b>⏭ Step</b> to see the greedy decision walk and the reasoning behind every choice.</div>';return;}
+  el.innerHTML=ghostSteps.slice(0,ghostStepIndex+1).map((s,i)=>{
+    const head=s.type==='head', current=i===ghostStepIndex;
+    const bulletHtml=s.bullets&&s.bullets.length?`<ul>${s.bullets.map(x=>`<li>${x}</li>`).join('')}</ul>`:'';
+    return `<details class="trace-step ${current?'current':''}" ${current?'open':''}>
+      <summary>
+        <span class="trace-num" style="background:${head?'rgba(245,158,11,0.15)':'rgba(59,130,246,0.15)'};color:${head?'#fbbf24':'#60a5fa'};">${i+1}</span>
+        <span class="trace-title">${s.title||s.msg}</span>
+      </summary>
+      <div class="trace-body">
+        ${s.rule?`<span class="rule-tag">${s.rule}</span>`:''}
+        <div>${s.msg}</div>
+        <div style="margin-top:5px;">${s.why||''}</div>
+        ${bulletHtml}
+      </div>
+    </details>`;
+  }).join('');
+}
+
+function renderEpochTimeline(){
+  const el=document.getElementById('epochTimeline'); if(!el)return;
+  const colors=['#3b82f6','#8b5cf6','#06b6d4','#f59e0b'],cell=22,gap=3,x0=30;
+  let s='<svg viewBox="0 0 860 185" class="diagram"><defs><marker id="et" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="var(--muted)"/></marker></defs>';
+  s+='<text x="30" y="24" fill="var(--muted)" font-size="9">An attestation for slot n is normally included in slot n+1 — fork choice always sees slightly delayed votes.</text>';
+  for(let g=0;g<4;g++){
+    const x=x0+g*8*(cell+gap),w=8*(cell+gap)-gap;
+    s+=`<rect x="${x}" y="40" width="${w}" height="18" rx="4" fill="${colors[g]}1f" stroke="${colors[g]}"/>`;
+    s+=`<text x="${x+w/2}" y="53" text-anchor="middle" fill="${colors[g]}" font-size="8">COMMITTEE ${g}</text>`;
+  }
+  for(let i=0;i<32;i++){
+    const x=x0+i*(cell+gap),c=colors[Math.floor(i/8)];
+    s+=`<rect x="${x}" y="68" width="${cell}" height="26" rx="4" fill="${c}22" stroke="${c}"/>`;
+    s+=`<text x="${x+cell/2}" y="85" text-anchor="middle" fill="var(--muted)" font-size="8">${i}</text>`;
+  }
+  s+='<line x1="30" y1="108" x2="827" y2="108" stroke="var(--purple)" stroke-width="1.5"/>';
+  s+='<line x1="30" y1="103" x2="30" y2="113" stroke="var(--purple)"/><line x1="827" y1="103" x2="827" y2="113" stroke="var(--purple)"/>';
+  s+='<text x="428" y="126" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">EPOCH N — 32 SLOTS × 12 s = 384 s ≈ 6.4 min</text>';
+  s+='<line x1="428" y1="132" x2="428" y2="146" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#et)"/>';
+  s+='<rect x="250" y="150" width="356" height="26" rx="7" fill="rgba(168,85,247,0.1)" stroke="var(--purple)"/>';
+  s+='<text x="428" y="167" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="700">EPOCH BOUNDARY — tally links → justify / finalize → shuffle committees</text>';
+  s+='</svg>';
+  el.innerHTML=s;
+}
+
+function updateGauge(){
+  const input=document.getElementById('participation'); if(!input)return;
+  const pct=Number(input.value),fill=document.getElementById('gaugeFill'),verdict=document.getElementById('gaugeVerdict');
+  fill.style.width=pct+'%';
+  if(pct>=66.7){
+    fill.style.background='linear-gradient(90deg, var(--emerald), var(--purple))';
+    verdict.style.background='rgba(16,185,129,0.12)'; verdict.style.color='#6ee7b7';
+    verdict.innerHTML=`✅ ${pct}% ≥ ⅔ — supermajority link forms. Target checkpoint is justified; its parent is finalized if the target is the next epoch.`;
+  }else{
+    fill.style.background='linear-gradient(90deg, var(--blue), var(--amber))';
+    verdict.style.background='rgba(239,68,68,0.10)'; verdict.style.color='#f87171';
+    verdict.innerHTML=`❌ ${pct}% &lt; ⅔ — no supermajority link. The checkpoint stays unjustified and finality cannot advance.`;
+  }
+}
 
 function renderTree(){
   const canvas=document.getElementById('treeCanvas'); const ctx=canvas.getContext('2d'); const dpr=window.devicePixelRatio||1;
